@@ -7,7 +7,11 @@
     "cesium": "^1.73.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "gltf-pipeline": "^3.0.0"
+    "gltf-pipeline": "^3.0.0",
+    "obj2gltf": "^3.1.0"
+  },
+  "scripts": {
+    "dev": "nodemon src/index"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"
