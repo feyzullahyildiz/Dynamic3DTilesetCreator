@@ -8,6 +8,7 @@ const createB3dm = require('./lib/createB3dm');
 const Mesh = require('./lib/Mesh');
 app.use(express.static(path.resolve(__dirname, 'public')))
 
+const FIXED_GLTF_PATH = path.resolve(__dirname, 'public', 'asset', 'transformed-triangle.gltf');
 app.get('/api/tileset.json', (req, res) => {
 
     const southWest = Cartographic.fromDegrees(28.804961, 41.067761);
@@ -16,8 +17,8 @@ app.get('/api/tileset.json', (req, res) => {
     const b3dmSouthWest = Cartographic.fromDegrees(28.8051, 41.068);
     const b3dmNorthEast = Cartographic.fromDegrees(28.8090, 41.070);
 
-    const child2B3dmSouthWest = Cartographic.fromDegrees(28.806, 41.072);
-    const child2B3dmNorthEast = Cartographic.fromDegrees(28.81, 41.075);
+    const child2B3dmSouthWest = Cartographic.fromDegrees(28.81, 41.07);
+    const child2B3dmNorthEast = Cartographic.fromDegrees(28.815, 41.072);
     // console.log('southWest', southWest)
     // console.log('northEast', northEast)
     const tilesetJson = {
@@ -41,85 +42,60 @@ app.get('/api/tileset.json', (req, res) => {
                     196.10000000000002
                 ]
             },
-            children: [
-                {
-                    "boundingVolume": {
-                        "region": [
-                            b3dmSouthWest.longitude,
-                            b3dmSouthWest.latitude,
-                            b3dmNorthEast.longitude,
-                            b3dmNorthEast.latitude,
-                            0,
-                            160
-                        ]
-                    },
-                    content: { uri: 'data.b3dm' },
-                    geometricError: 175.78125,
-                    level: 12
-                },
-                {
-                    "boundingVolume": {
-                        "region": [
-                            child2B3dmSouthWest.longitude,
-                            child2B3dmSouthWest.latitude,
-                            child2B3dmNorthEast.longitude,
-                            child2B3dmNorthEast.latitude,
-                            50,
-                            100
-                        ]
-                    },
-                    content: { uri: 'handmade.b3dm' },
-                    geometricError: 175.78125,
-                    level: 12
-                },
-            ]
+            // children: [
+            //     {
+            //         "boundingVolume": {
+            //             "region": [
+            //                 b3dmSouthWest.longitude,
+            //                 b3dmSouthWest.latitude,
+            //                 b3dmNorthEast.longitude,
+            //                 b3dmNorthEast.latitude,
+            //                 0,
+            //                 160
+            //             ]
+            //         },
+            //         content: { uri: 'data.b3dm' },
+            //         geometricError: 175.78125,
+            //         level: 12
+            //     },
+            //     // {
+            //     //     "boundingVolume": {
+            //     //         "region": [
+            //     //             child2B3dmSouthWest.longitude,
+            //     //             child2B3dmSouthWest.latitude,
+            //     //             child2B3dmNorthEast.longitude,
+            //     //             child2B3dmNorthEast.latitude,
+            //     //             5,
+            //     //             115
+            //     //         ]
+            //     //     },
+            //     //     content: { uri: 'data.b3dm' },
+            //     //     geometricError: 175.78125,
+            //     //     level: 12
+            //     // },
+            // ]
         }
     }
     res.json(tilesetJson);
 })
 
-app.get('/api/data.b3dm', (req, res) => {
+app.get('/api/data.b3dm', async (req, res) => {
     res.set('content-type', 'application/octet-stream');
-    const arrowGltfBuffer = fs.readFileSync(path.resolve(__dirname, 'public', 'asset', 'arrow.glb'));
+    const fixedGltf = fs.readFileSync(FIXED_GLTF_PATH);
     const resultBuffer = createB3dm({
-        glb: arrowGltfBuffer,
+        glb: fixedGltf,
     })
     // console.log(header);
     // const resultBuffer = Buffer.concat([header, arrowGltfBuffer])
     res.send(resultBuffer)
 })
 
-
-app.get('/api/handmade.b3dm', async (req, res) => {
-    res.set('content-type', 'application/octet-stream');
-    const arrowGltfBuffer = fs.readFileSync(path.resolve(__dirname, 'public', 'asset', 'triangle.gltf'));
-    // console.log(header);
-
-    const binaryGltHeader = Buffer.alloc(20);
-    binaryGltHeader.write('gltf', 0);
-    binaryGltHeader.writeInt32LE(2, 4);
-    binaryGltHeader.writeInt32LE(arrowGltfBuffer.length + 12, 8);
-    binaryGltHeader.writeInt32LE(arrowGltfBuffer.length, 12);
-    binaryGltHeader.write('JSON', 16);
-    console.log('binaryGltHeader', binaryGltHeader)
-    const glbBuffer = Buffer.concat([binaryGltHeader, arrowGltfBuffer])
-
-    const featureTable = Buffer.alloc(0);
-    const batchTable = Buffer.alloc(0);
-    const headerSize = 28;
-    const header = Buffer.alloc(headerSize);
-    const totalByteLength = featureTable.length + batchTable.length + headerSize + glbBuffer.length;
-    header.write('b3dm', 0);
-    header.writeInt32LE(1, 4);
-    header.writeInt32LE(totalByteLength, 8);
-
-
-    const responseBuffer = Buffer.concat([
-        header, featureTable, batchTable, glbBuffer
-    ])
-    res.send(responseBuffer)
+app.get('/api/fixed.gltf', (req, res) => {
+    const fixedGltf = fs.readFileSync(FIXED_GLTF_PATH);
+    res.send(fixedGltf);
 })
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log('app started')
+    console.log('app started at ', port)
 })

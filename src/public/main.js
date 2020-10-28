@@ -28,3 +28,12 @@ const model = Cesium.Model.fromGltf({
 })
 
 viewer.scene.primitives.add(model);
+
+const fixedModel = Cesium.Model.fromGltf({
+    url: '/api/fixed.gltf',
+    scale : 10.0,
+    debugShowBoundingVolume: true,
+    debugWireframe: true,
+})
+
+viewer.scene.primitives.add(fixedModel);
